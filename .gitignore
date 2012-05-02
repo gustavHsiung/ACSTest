@@ -1,13 +1,8 @@
-*.class
-*.pyc
-*.pyo
-
+# Build directories #
+#####################
 .fastdev.lock
 build.log
 build/
-
-# Build directories #
-#####################
 tmp
 build/android/
 build/iphone/
@@ -19,3 +14,19 @@ build/iphone/
 ehthumbs.db
 Icon?
 Thumbs.db
+
+# Xcode
+build/*
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+*.xcworkspace
+!default.xcworkspace
+xcuserdata
+profile
+*.moved-aside
