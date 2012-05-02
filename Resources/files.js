@@ -16,6 +16,13 @@ if(Cloud.debug){
 
  
 win.backgroundColor = '#399';
+var add = Titanium.UI.createButton({
+	title:'Add'
+});
+
+add.addEventListener('click', addNewFiles);
+
+win.setRightNavButton(add);
 
 var label = Titanium.UI.createLabel({
 	color:'#fff',
@@ -27,21 +34,22 @@ var label = Titanium.UI.createLabel({
 
 win.add(label);
 
-if(!currentUser)
-{
-	label.text = 'Please go back to Account tab and login first!';
-}else
-{
-	label.text = 'Loading files...';
-	loadFiles(1);
-}
 
+win.addEventListener('focus', loadFiles);
 /*
  * File Methods
  * 
  */
 function loadFiles(pageNumber)
 {
+	if(!currentUser)
+	{
+		label.text = 'Please go back to Account tab and login first!';
+		return;
+	}
+	
+	label.text = 'Loading files...';
+	
 	var xhr = Titanium.Network.createHTTPClient({
  		enableKeepAlive:false
 	});
@@ -57,6 +65,10 @@ function loadFiles(pageNumber)
 		if(this.responseText != '0')
 		{
 			Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> responseText:" +this.responseText);
+			var data = JSON.parse(this.responseText);
+			Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> data:" +data);
+			
+			didLoadFiles(data);
 		}else{
 				Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> files/query response error");
 		}
@@ -77,8 +89,12 @@ function didLoadFiles(data) {
 
       if(meta.status == 'ok' && meta.code == 200 && meta.method_name == 'queryFiles') {
         var files = data.response.files;
-        label.text = 'You have '+files.size +' files...';
+        label.text = 'You have '+files.length +' files...';
       }
     }
   }
+}
+
+function addNewFiles(e){
+	
 }
