@@ -1,9 +1,20 @@
 
+var win = Titanium.UI.currentWindow;
 
-var win = Titanium.UI.currentWindow; 
 var currentUser = win.currentUser;
-var sdk = new Cocoafish('4BwETUU5O8lUo0es7xlvYaKTJa6hmX4l');  // app key
 
+var Cloud = require('ti.cloud');
+
+var appkey = '';
+
+if(Cloud.debug){
+	appkey = '4BwETUU5O8lUo0es7xlvYaKTJa6hmX4l';
+}else{
+	appkey = 't1HQXR8047dBuzkfMD8lVK646O5fT4bS';
+} 
+
+
+ 
 win.backgroundColor = '#399';
 
 var label = Titanium.UI.createLabel({
@@ -31,12 +42,33 @@ if(!currentUser)
  */
 function loadFiles(pageNumber)
 {
+	var xhr = Titanium.Network.createHTTPClient({
+ 		enableKeepAlive:false
+	});
 
 	var data = {
   		where: '{"name":"Appcelerator Cloud Services"}',
   		page:pageNumber
 	};
-	sdk.sendRequest('files/query.json', 'GET', data, didLoadFiles);
+	xhr.open('GET','https://api.cloud.appcelerator.com/v1/files/query.json?key='+appkey);
+		
+	xhr.onload = function(response) {
+			//the image upload method has finished 
+		if(this.responseText != '0')
+		{
+			Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> responseText:" +this.responseText);
+		}else{
+				Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> files/query response error");
+		}
+	};
+	
+	xhr.onerror = function(e)
+	{
+     	Ti.API.info(e);
+	};
+		
+	xhr.send();
+
 }
 function didLoadFiles(data) {
   if(data) {

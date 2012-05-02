@@ -77,13 +77,12 @@ var win2 = Titanium.UI.createWindow({
     title:'Files',
     backgroundColor:'#fff',
     currentUser:currentUser,
-    url: 'files.js',
+    url: 'files.js'
 });
 var tab2 = Titanium.UI.createTab({  
     icon:'KS_nav_ui.png',
     title:'Files',
-    
-    window:win2
+     window:win2
 });
 
 
