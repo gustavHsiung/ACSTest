@@ -22,17 +22,23 @@ if(Cloud.debug == true){
 /*
  * UI 
  */
+var isAndroid = Ti.Platform.osname == 'android';
+
 win.backgroundColor = '#399';
-var add = Titanium.UI.createButton({
+var addButton = Titanium.UI.createButton({
 	title:'Add'
 });
 
-add.addEventListener('click', addNewFiles);
-if(Ti.Platform.name == 'android'){
-	
+addButton.addEventListener('click', showFilesSourcesList);
+if(isAndroid){
+	addButton.top=10;
+	addButton.left=200;
+	addButton.width =100;
+	addButton.height = 44;
+	win.add(addButton);
 }else
 {
-	win.setRightNavButton(add);
+	win.setRightNavButton(addButton);
 }
 var label = Titanium.UI.createLabel({
 	color:'#fff',
@@ -40,7 +46,8 @@ var label = Titanium.UI.createLabel({
 	font:{fontSize:20,fontFamily:'Helvetica Neue'},
 	textAlign:'center',
 	width:'auto',
-	top:10
+	top:10,
+	left:20
 });
 
 win.add(label);
@@ -121,6 +128,20 @@ function didLoadFiles(data) {
       }
     }
   }
+}
+
+function showFilesSourcesList(){
+	if(isAndroid){
+		var opts = {
+ 		 title: 'Choose from'
+		};
+		opts.options = ['SD Card', 'Photo Gallery'];
+  		opts.buttonNames = ['Confirm','Cancel'];
+  		
+  		var dialog = Ti.UI.createOptionDialog(opts).show();
+	}else{
+		addNewFiles();
+	}
 }
 
 function addNewFiles(e){
