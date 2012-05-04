@@ -1,5 +1,5 @@
-Ti.include('lib/oauth.js');
-Ti.include('lib/sha1.js');
+//Ti.include('lib/oauth.js');
+//Ti.include('lib/sha1.js');
 
 
 
@@ -145,17 +145,22 @@ function addNewFiles(e){
 			win.add(ind);
 			ind.show();
  			
- 			var accessor = { consumerSecret: OAuthSecret };
  			var now = new Date();
-			var params = [
-				['name',now.toLocaleDateString + '_img'],  /* event.media holds blob from gallery */
+			var params = {
+				'name':now.toLocaleDateString + '_img', 
+	            'file':selectedImage
+			};
+	        /*
+	        var params = [
+				['name',now.toLocaleDateString + '_img'], 
 	            ['file',selectedImage]
-	        ];
+	        var accessor = { consumerSecret: OAuthSecret };
+ 			
  			var message = set_message('http://api.cloud.appcelerator.com/v1/files/create.json', 'POST', params);
  			OAuth.setTimestampAndNonce(message);
 			OAuth.SignatureMethod.sign(message, accessor);
 			var finalUrl = OAuth.addToURL(message.action, message.parameters);
-
+*/
 			var xhr = Titanium.Network.createHTTPClient();
  
 	    	// onsendstream called repeatedly, use the progress property to
@@ -178,11 +183,11 @@ function addNewFiles(e){
 		     	Ti.API.info(e);
 			};
 			
-	        xhr.open('POST',finalUrl);
+	        xhr.open('POST','https://api.cloud.appcelerator.com/v1/files/create.json?key='+appkey);
 	        xhr.setRequestHeader("Cookie", "_session_id="+currentUser.session_id);
 	        Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> _session_id:" +currentUser.session_id);
 				
-			xhr.send();
+			xhr.send(params);
     	}
 	});
 	
