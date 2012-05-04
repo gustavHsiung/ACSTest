@@ -4,16 +4,24 @@ Cloud.debug = true;  // optional; if you add this line, set it to false for prod
 Titanium.Facebook.appid = '203212366445168'; 
 Ti.Facebook.permissions = ['publish_stream','email']; // Permissions your app needs
 		
-var currentUser = {
-	
-};
+var currentUser = {};
 
 // this sets the background color of the master UIView (when there are no windows/tab groups on it)
 Titanium.UI.setBackgroundColor('#000');
 
 // create tab group
 var tabGroup = Titanium.UI.createTabGroup();
-
+if (Ti.Platform.osname === "android") {
+    // window focus events don't work on android so this workaround
+    // catches the tabGroup focus event and fires the event on the
+    // active window object
+    tabGroup.addEventListener('focus', function(e) {
+        var win = tabGroup.activeTab.window;
+        e.originalSource = e.source;
+        e.source = win;
+        win.fireEvent('focus', e);
+    });
+}
 
 //
 // create base UI tab and root window
@@ -77,7 +85,8 @@ var win2 = Titanium.UI.createWindow({
     title:'Files',
     backgroundColor:'#fff',
     currentUser:currentUser,
-    url: 'files.js'
+    url: 'files.js',
+    Cloud:Cloud
 });
 var tab2 = Titanium.UI.createTab({  
     icon:'KS_nav_ui.png',

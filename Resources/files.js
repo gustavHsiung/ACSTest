@@ -1,19 +1,14 @@
-//Ti.include('lib/oauth.js');
-//Ti.include('lib/sha1.js');
-
-
 
 var win = Titanium.UI.currentWindow;
 
 var currentUser = win.currentUser;
-var cocoafish = require('lib/cocoafish_module');
 
-var Cloud = require('ti.cloud');
-Cloud.debug = true; 
+var Cloud = win.Cloud;
 
 var appkey = '';
 var OAuthSecret = '';
 var consumerKey = '';
+
 if(Cloud.debug == true){
 	appkey = '4BwETUU5O8lUo0es7xlvYaKTJa6hmX4l';
 	OAuthSecret = 'UOaevJco8KAAAZFfg83z5Qv8UHfnHsIp';
@@ -24,15 +19,19 @@ if(Cloud.debug == true){
 	consumerKey = '9SZA3i2EhaO3wAVqID8yDL6gLZdwMLs6';
 } 
 
-var client = new cocoafish.Client(appkey);
- 
+/*
+ * UI 
+ */
 win.backgroundColor = '#399';
 var add = Titanium.UI.createButton({
 	title:'Add'
 });
 
 add.addEventListener('click', addNewFiles);
-if(Ti.Platform.name != 'android'){
+if(Ti.Platform.name == 'android'){
+	
+}else
+{
 	win.setRightNavButton(add);
 }
 var label = Titanium.UI.createLabel({
@@ -40,13 +39,15 @@ var label = Titanium.UI.createLabel({
 	text:currentUser.last_name,
 	font:{fontSize:20,fontFamily:'Helvetica Neue'},
 	textAlign:'center',
-	width:'auto'
+	width:'auto',
+	top:10
 });
 
 win.add(label);
 
 
 win.addEventListener('focus', loadFiles);
+
 
 /*
  * File Methods
@@ -147,20 +148,10 @@ function addNewFiles(e){
  			
  			var now = new Date();
 			var params = {
-				'name':now.toLocaleDateString + '_img', 
+				'name':now.toString() + '_img', 
 	            'file':selectedImage
 			};
-	        /*
-	        var params = [
-				['name',now.toLocaleDateString + '_img'], 
-	            ['file',selectedImage]
-	        var accessor = { consumerSecret: OAuthSecret };
- 			
- 			var message = set_message('http://api.cloud.appcelerator.com/v1/files/create.json', 'POST', params);
- 			OAuth.setTimestampAndNonce(message);
-			OAuth.SignatureMethod.sign(message, accessor);
-			var finalUrl = OAuth.addToURL(message.action, message.parameters);
-*/
+
 			var xhr = Titanium.Network.createHTTPClient();
  
 	    	// onsendstream called repeatedly, use the progress property to
@@ -185,45 +176,14 @@ function addNewFiles(e){
 			
 	        xhr.open('POST','https://api.cloud.appcelerator.com/v1/files/create.json?key='+appkey);
 	        xhr.setRequestHeader("Cookie", "_session_id="+currentUser.session_id);
-	        Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> _session_id:" +currentUser.session_id);
-				
+	      		
 			xhr.send(params);
     	}
 	});
 	
 }
 
-function uploadFile (argument) {
+function updateFile (argument) {
 	
  
-}
-/*
- * OAuth Methods
- * 
- */
-function set_message(url, method, params) {
-		var message = {
-			action: url,
-			method: (method=='GET') ? method : 'POST',
-			parameters: [
-			['oauth_consumer_key',consumerKey],
-			['oauth_secret_key', OAuthSecret],
-			['oauth_signature_method', 'HMAC-SHA1'],
-			['oauth_token',''],
-			["oauth_timestamp", OAuth.timestamp().toFixed(0)],
-			["oauth_nonce", OAuth.nonce(42)],
-			["oauth_version", "1.0"]
-			]
-		};
-		
-		Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> message.parameters:" +message.parameters);
-				
-		for (var key in params) {
-		    if (params.hasOwnProperty(key)) {
-		        message.parameters.push([key,params[key]]);
-		    }
-		}
-
-
-		return message;
 }
