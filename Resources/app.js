@@ -108,10 +108,11 @@ function loginACS()
         }, function (e) {
             if (e.success) {
                 currentUser = e.users[0];
+                currentUser.session_id = e.meta.session_id;
                 win2.currentUser = currentUser;
                 alert('Logged in! You are now logged in as ' + currentUser.first_name + currentUser.last_name);	
                	label.text = 'Hi!'+ currentUser.first_name +' '+ currentUser.last_name;
-	
+			
             }
             else {
                 error(e);
@@ -122,3 +123,5 @@ function showAccountUpdate()
 {
 	
 }
+
+

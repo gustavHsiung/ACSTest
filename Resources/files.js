@@ -6,6 +6,7 @@ Ti.include('lib/sha1.js');
 var win = Titanium.UI.currentWindow;
 
 var currentUser = win.currentUser;
+var cocoafish = require('lib/cocoafish_module');
 
 var Cloud = require('ti.cloud');
 Cloud.debug = true; 
@@ -23,6 +24,7 @@ if(Cloud.debug == true){
 	consumerKey = '9SZA3i2EhaO3wAVqID8yDL6gLZdwMLs6';
 } 
 
+var client = new cocoafish.Client(appkey);
  
 win.backgroundColor = '#399';
 var add = Titanium.UI.createButton({
@@ -50,6 +52,23 @@ win.addEventListener('focus', loadFiles);
  * File Methods
  * 
  */
+
+function login()
+{
+	
+	// login to the app
+	client.login({
+		'login' : "sharry@molinto.com",
+		'password' : "password"
+	}, function(e) {
+	
+	if(e.success === true) {
+		Ti.API.info("logged in ok: " + JSON.stringify(e));
+	} else {
+		Ti.API.error(e.error);
+	}
+});
+}
 function loadFiles(pageNumber)
 {
 	if(!currentUser)
@@ -158,9 +177,12 @@ function addNewFiles(e){
 			{
 		     	Ti.API.info(e);
 			};
+			
 	        xhr.open('POST',finalUrl);
-	       // xhr.setRequestHeader('oauth_consumer_key', OAuthConsumerKey);
-	        xhr.send();
+	        xhr.setRequestHeader("Cookie", "_session_id="+currentUser.session_id);
+	        Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> _session_id:" +currentUser.session_id);
+				
+			xhr.send();
     	}
 	});
 	
