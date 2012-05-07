@@ -23,13 +23,15 @@ if(Cloud.debug == true){
  * UI 
  */
 var isAndroid = Ti.Platform.osname == 'android';
+var screenWidth 	= Titanium.Platform.displayCaps.platformWidth;
+var screenHeight	= Titanium.Platform.displayCaps.platformHeight;
 
 win.backgroundColor = '#399';
 var addButton = Titanium.UI.createButton({
 	title:'Add'
 });
 
-addButton.addEventListener('click', showFilesSourcesList);
+addButton.addEventListener('click', showFilesSourcesOption);
 if(isAndroid){
 	addButton.top=10;
 	addButton.left=200;
@@ -52,6 +54,107 @@ var label = Titanium.UI.createLabel({
 
 win.add(label);
 
+//Table
+//create refresh view and relative variable
+var pulling = false;
+var reloading = false;
+
+var tableHeader = Titanium.UI.createView({
+	backgroundImage:'img/header.png',
+	width: screenWidth,
+	height: 120
+})
+
+var arrowImage = Titanium.UI.createImageView({
+	backgroundImage:"img/refreshArrow.png",
+	width:22,
+	height:54,
+	bottom:20,
+	left:20
+})
+var statusLabel = Ti.UI.createLabel({ 
+	text:"Pull to refresh...",
+	left:85,
+	width:200,
+	bottom:28,
+	height:"auto",
+	color:"#FFF",
+	textAlign:"center",
+	font :{fontSize:14, fontWeight :"bold"},
+	shadowColor:"#89a",
+	shadowOffset:{x:0,y:1}
+});
+var actIndicator = Titanium.UI.createActivityIndicator({
+	left:20,
+	bottom:20,
+	width: 40,
+	height: 40
+});
+tableHeader.add(actIndicator);
+tableHeader.add(arrowImage);
+tableHeader.add(statusLabel);
+
+
+//create a table view
+var recipesTable = Titanium.UI.createTableView({
+	width: screenWidth,
+	height: screenHeight - 60,
+	top: 	60,
+	left: 	0,
+	filterAttribute:'filter'
+}); 
+recipesTable.headerPullView = tableHeader;
+win.add(recipesTable);
+
+//table scrolling function
+recipesTable.addEventListener('scroll', function(e){
+	if(Ti.Platform.osname != 'iphone'){
+		Titanium.API.info("Ti.Platform.osname != 'iPhone':"+Ti.Platform.osname);
+		return;
+	}
+	
+	var offset = e.contentOffset.y;
+	if(offset < -80.0 && !pulling)
+	{
+		pulling = true;
+		arrowImage.backgroundImage = 'img/refreshArrow_up.png';
+		statusLabel.text = "Release to refresh...";
+	}else{
+		pulling = false;
+		arrowImage.backgroundImage = 'img/refreshArrow.png';
+		statusLabel.text = "Pull to refresh...";
+	}
+});
+recipesTable.addEventListener('scroll', function(e){
+	if(Ti.Platform.osname != 'iphone'){
+		return;
+	}
+	var offset = e.contentOffset.y;
+	if(pulling && !reloading && e.contentOffset.y <= -80.0)
+	{
+		reloading = true;
+		pulling = false;
+		arrowImage.hide();
+		actIndicator.show();
+		statusLabel.text = "Reloading recipes...";
+		recipesTable.setContentInsets({top:80},{animated:true});
+		
+		//null out the existing recipe data
+		recipesTable.data = null;
+		data =[];
+		
+		loadFiles();
+	}
+});
+//tablerow selected function: create new window
+recipesTable.addEventListener('click', function(e){
+	
+	//get the selected row index
+	var selectedRow = e.rowData;
+		
+});
+
+
 
 win.addEventListener('focus', loadFiles);
 
@@ -61,22 +164,6 @@ win.addEventListener('focus', loadFiles);
  * 
  */
 
-function login()
-{
-	
-	// login to the app
-	client.login({
-		'login' : "sharry@molinto.com",
-		'password' : "password"
-	}, function(e) {
-	
-	if(e.success === true) {
-		Ti.API.info("logged in ok: " + JSON.stringify(e));
-	} else {
-		Ti.API.error(e.error);
-	}
-});
-}
 function loadFiles(pageNumber)
 {
 	if(!currentUser)
@@ -125,20 +212,100 @@ function didLoadFiles(data) {
       if(meta.status == 'ok' && meta.code == 200 && meta.method_name == 'queryFiles') {
         var files = data.response.files;
         label.text = 'You have '+files.length +' files.';
+        var tableData = [];
+        	//get through each item 
+		for(var i = 0; i < files.length; i++)
+		{
+			var aFile = files[i];
+			
+			//create table row
+			var row = Titanium.UI.createTableViewRow({
+				_title:aFile.name,
+				_id:   aFile.id,
+				_url:  aFile.url,
+				hasChild: true,
+				className: 'recipe-row',
+				filter: aFile.name,
+				height:'auto',
+				backgroundColor: '#fff',
+				height: 50
+			});
+			//title label for row at index i
+			var titleLabel = Titanium.UI.createLabel({
+				text:  aFile.name,
+				font : {fontSize: 14, fontWeight : ' bold' },
+				left: 70,
+				top: 5,
+				height: 20,
+				width: 210,
+				color:'#232'
+			});
+			
+			row.add(titleLabel);
+			
+			//description view for row at index i
+			var updateTimeLabel = Titanium.UI.createLabel({
+				text: aFile.updated_at,
+				font : {fontSize: 10, fontWeight : ' normal ' },
+				left: 	70,
+				top: 	titleLabel.height+5,
+				width: 	200,
+				color:	'#9a9',
+				height: 20
+			});
+			
+			row.add(updateTimeLabel);
+			
+		
+			//according to the file type, add different icon to the left of the row 
+			/*var iconImage = Titanium.UI.createImageView({
+				image: 'img/eggpan.png',
+				width: 50,
+				height: 50,
+				left: 10,
+				top: 10 
+			});
+			row.add(iconImage);*/
+			//add the row to data array
+			tableData.push(row);
+		}
+		// set the data to tableview's data
+		recipesTable.data = tableData;
+		
+		if(reloading == true){
+			//when done, reset the header to its original style 
+			recipesTable.setContentInsets({top:0},{animated:true});
+			reloading = false;
+			statusLabel.text = "Pull to refresh...";
+			actIndicator.hide();
+			arrowImage.backgroundImage = 'img/refreshArrow.png';
+			arrowImage.show();
+		 }
       }
     }
+    
   }
 }
 
-function showFilesSourcesList(){
+function showFilesSourcesOption(){
 	if(isAndroid){
 		var opts = {
- 		 title: 'Choose from'
+ 		 title: 'Choose from',
+ 		 cancel:1
 		};
 		opts.options = ['SD Card', 'Photo Gallery'];
-  		opts.buttonNames = ['Confirm','Cancel'];
+  		//opts.buttonNames = ['Confirm','Cancel'];
   		
-  		var dialog = Ti.UI.createOptionDialog(opts).show();
+  		var dialog = Ti.UI.createOptionDialog(opts);
+  		dialog.addEventListener('click',function(e){
+  			if(e.index == 0)
+  			{
+  				
+  			}else{
+  				
+  			}
+  		});
+  		dialog.show();
 	}else{
 		addNewFiles();
 	}
