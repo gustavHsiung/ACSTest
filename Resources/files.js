@@ -288,7 +288,7 @@ function didLoadFiles(data) {
 }
 
 function showFilesSourcesOption(){
-	if(isAndroid){
+	if(isAndroid &&Ti.Filesystem.isExternalStoragePresent()){
 		var opts = {
  		 title: 'Choose from',
  		 cancel:1
@@ -300,22 +300,20 @@ function showFilesSourcesOption(){
   		dialog.addEventListener('click',function(e){
   			if(e.index == 0)
   			{
-  				
+  				openSDFiles(e);	
   			}else{
-  				
+  				openPhotoGallery(e);
   			}
   		});
   		dialog.show();
 	}else{
-		addNewFiles();
+		openPhotoGallery();
 	}
 }
 
-function addNewFiles(e){
-	Titanium.Media.openPhotoGallery({
-    	success:function(event) {
-        /* success callback fired after media retrieved from gallery */
-        /* Create a progress bar */
+function addNewFiles(event){
+
+ /* Create a progress bar */
        		var selectedImage = event.media;
 	        
 			var ind=Titanium.UI.createProgressBar({
@@ -366,12 +364,19 @@ function addNewFiles(e){
 	        xhr.setRequestHeader("Cookie", "_session_id="+currentUser.session_id);
 	      		
 			xhr.send(params);
-    	}
-	});
-	
+
 }
 
 function updateFile (argument) {
 	
  
 }
+function openPhotoGallery(e){
+	Titanium.Media.openPhotoGallery({
+    	success:addNewFiles
+   });
+}
+function openSDFiles(){
+	var dir = Titanium.Filesystem.getFile(Titanium.Filesystem.externalStorageDirectory);
+}
+ 
