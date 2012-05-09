@@ -154,8 +154,37 @@ recipesTable.addEventListener('click', function(e){
 		
 });
 
+// this is use for more actions
+var floatingView = Ti.UI.createView({
+	width: screenWidth-40,
+	height: screenHeight - 100,
+	top: 20,
+	left:20,
+	backgroundColor: '#000',
+	opacity: 0.6
+});
 
+var closeButton = Titanium.UI.createButton({
+		zIndex:9,
+		width: 35,
+		height: 35 ,
+		top: 	5,
+		right: 	10,
+		title:'X'
+});
+closeButton.addEventListener('click',function(){
+	win.remove(floatingView);
+});
 
+floatingView.add(closeButton);
+ 
+var dsFileTable = Titanium.UI.createTableView({
+	width: floatingView.width -20,
+	height: floatingView.height - 20 ,
+	top: 	10,
+	left: 	10,
+});
+	
 win.addEventListener('focus', loadFiles);
 
 
@@ -314,8 +343,7 @@ function showFilesSourcesOption(){
 function addNewFiles(event){
 
  /* Create a progress bar */
-       		var selectedImage = event.media;
-	        
+       		 
 			var ind=Titanium.UI.createProgressBar({
 	  		  width:200,
 	  		  height:50,
@@ -329,7 +357,7 @@ function addNewFiles(event){
 	  	      color:'#888'
 			});
  
-			win.add(ind);
+			floatingView.add(ind);
 			ind.show();
  			
  			var now = new Date();
@@ -346,24 +374,25 @@ function addNewFiles(event){
 	    		ind.value = e.progress ;
 	    		Ti.API.info('ONSENDSTREAM - PROGRESS: ' + e.progress);
 			};
-	        xhr.onload = function(e) {
-	        	Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> responseText:" +this.responseText);
-				ind.hide();
-	            Ti.UI.createAlertDialog({
+	xhr.onload = function(e) {
+	    Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> responseText:" +this.responseText);
+		ind.hide();
+	    Ti.UI.createAlertDialog({
 	                  title:'Success',
 	                  message:'status code ' + this.status
-	            }).show();
-	            
-	        };
-	        xhr.onerror = function(e)
-			{
-		     	Ti.API.info(e);
-			};
+		}).show();
+            
+	};
+	
+	xhr.onerror = function(e)
+	{
+	    Ti.API.info(e);
+	};
 			
-	        xhr.open('POST','https://api.cloud.appcelerator.com/v1/files/create.json?key='+appkey);
-	        xhr.setRequestHeader("Cookie", "_session_id="+currentUser.session_id);
+	xhr.open('POST','https://api.cloud.appcelerator.com/v1/files/create.json?key='+appkey);
+	xhr.setRequestHeader("Cookie", "_session_id="+currentUser.session_id);
 	      		
-			xhr.send(params);
+	xhr.send(params);
 
 }
 
@@ -373,7 +402,7 @@ function updateFile (argument) {
 }
 function openPhotoGallery(e){
 	Titanium.Media.openPhotoGallery({
-    	success:addNewFiles
+    	success:didSelectPhoto
    });
 }
 function openSDFiles(){
@@ -381,20 +410,8 @@ function openSDFiles(){
 	var fileList = dir.getParent().getDirectoryListing();
 	Ti.API.info('external directoryListing = ' + dir.getParent().getDirectoryListing());
 	
-	var floatingView = Ti.UI.createView({
-		width: screenWidth-40,
-		height: screenHeight - 100,
-		top: 20,
-		left:20,
-		backgroundColor: '#000',
-		opacity: 0.6
-	});
-	var dsFileTable = Titanium.UI.createTableView({
-		width: floatingView.width -20,
-		height: floatingView.height - 20 ,
-		top: 	10,
-		left: 	10,
-	});
+	
+	
 	var tableData =[];
 	for(var i=0; i<fileList.length; i++) {
    		var file = fileList[i];
@@ -428,14 +445,29 @@ function openSDFiles(){
     	}
   	}
   	dsFileTable.data= tableData;
-  	dsFileTable.addEventListener('click',function(e){
-  		//get the selected row index
-		var selectedRow = e.rowData;
-		var file = selectedRow._file;
-		var fileName = file.toString();
-    	
-    	dsFileTable.hide();
-		floatingView.updateLayout({
+  	dsFileTable.addEventListener('click',showUploadView);
+  		
+	
+	floatingView.add(dsFileTable);
+	floatingView.add(closeButton);
+	win.add(floatingView);
+}
+function didSelectPhoto(event){
+	var selectedPhoto = event.media;
+	win.add(floatingView);
+	showUploadView(selectedPhoto,'');       
+}
+function didSelectSDFile(event){
+	var selectedRow = event.rowData;
+	var file = selectedRow._file;
+	var fileName = file.toString();
+    dsFileTable.hide();
+	showUploadView(file,fileName);
+}
+function showUploadView(file, fileName){
+	//get the selected row index
+		
+    	floatingView.updateLayout({
     	    top: '25%',
         	height: '50%'
    		});
@@ -446,13 +478,14 @@ function openSDFiles(){
 			height: '90%',
 			top: 	'5%',
 			left: 	'5%',
-			backgroundColor:'#FFF'
+			backgroundColor:'#FFF',
+			opacity:1.0
 		});
 		var titleLable = Titanium.UI.createLabel({
 			text: 'File Name:',
 			font : {fontSize: 18, fontWeight : ' bold' },
 			height: 30,
-			width:  '25%',
+			width:  '30%',
 			top: 	10,
 			left: 	'5%',
 			color:'#232'
@@ -462,7 +495,7 @@ function openSDFiles(){
 		var titleTextFiled = Titanium.UI.createTextField({
 			value:	fileName,
 			height: 60,
-			width:  '60%',
+			width:  '50%',
 			top: 	20,
 			left: 	'30%'
 		});
@@ -478,20 +511,4 @@ function openSDFiles(){
 		
 		floatingView.add(uploadView);
 		
-  	});
-	var closeButton = Titanium.UI.createButton({
-		zIndex:9,
-		width: 35,
-		height: 35 ,
-		top: 	5,
-		right: 	10,
-		title:'X'
-	});
-	closeButton.addEventListener('click',function(){
-		win.remove(floatingView);
-	});
-	floatingView.add(dsFileTable);
-	floatingView.add(closeButton);
-	win.add(floatingView);
 }
- 
