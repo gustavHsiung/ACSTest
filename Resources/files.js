@@ -378,5 +378,120 @@ function openPhotoGallery(e){
 }
 function openSDFiles(){
 	var dir = Titanium.Filesystem.getFile(Titanium.Filesystem.externalStorageDirectory);
+	var fileList = dir.getParent().getDirectoryListing();
+	Ti.API.info('external directoryListing = ' + dir.getParent().getDirectoryListing());
+	
+	var floatingView = Ti.UI.createView({
+		width: screenWidth-40,
+		height: screenHeight - 100,
+		top: 20,
+		left:20,
+		backgroundColor: '#000',
+		opacity: 0.6
+	});
+	var dsFileTable = Titanium.UI.createTableView({
+		width: floatingView.width -20,
+		height: floatingView.height - 20 ,
+		top: 	10,
+		left: 	10,
+	});
+	var tableData =[];
+	for(var i=0; i<fileList.length; i++) {
+   		var file = fileList[i];
+ 
+    	var fileName = file.toString();
+    	fileName = fileName.substr(fileName.lastIndexOf("/") + 1);
+ 
+    	if (fileName.substr(0,5) == 'tixhr') {
+      	//	file.deleteFile();
+    	}else
+    	{
+	    	//create table row
+			var row = Titanium.UI.createTableViewRow({
+				_file:file,
+				height:44,
+				backgroundColor: '#fff'
+			});
+			//title label for row at index i
+			var titleLabel = Titanium.UI.createLabel({
+				text:	fileName,
+				font : {fontSize: 14, fontWeight : ' bold' },
+				left: 20,
+				top: 5,
+				height: 30,
+				width: dsFileTable.width -40,
+				color:'#232'
+			});
+			
+			row.add(titleLabel);
+			tableData.push(row);
+    	}
+  	}
+  	dsFileTable.data= tableData;
+  	dsFileTable.addEventListener('click',function(e){
+  		//get the selected row index
+		var selectedRow = e.rowData;
+		var file = selectedRow._file;
+		var fileName = file.toString();
+    	
+    	dsFileTable.hide();
+		floatingView.updateLayout({
+    	    top: '25%',
+        	height: '50%'
+   		});
+   		
+		var uploadView = Titanium.UI.createView({
+			zIndex:0,
+			width: '90%',
+			height: '90%',
+			top: 	'5%',
+			left: 	'5%',
+			backgroundColor:'#FFF'
+		});
+		var titleLable = Titanium.UI.createLabel({
+			text: 'File Name:',
+			font : {fontSize: 18, fontWeight : ' bold' },
+			height: 30,
+			width:  '25%',
+			top: 	10,
+			left: 	'5%',
+			color:'#232'
+		});
+		uploadView.add(titleLable);
+		
+		var titleTextFiled = Titanium.UI.createTextField({
+			value:	fileName,
+			height: 60,
+			width:  '60%',
+			top: 	20,
+			left: 	'30%'
+		});
+		uploadView.add(titleTextFiled);
+		var confrimButton = Titanium.UI.createButton({
+			width: '80%',
+			height: 44 ,
+			top: 	80,
+			left: 	'10%',
+			title:'Upload'
+		});
+		uploadView.add(confrimButton);
+		
+		floatingView.add(uploadView);
+		
+  	});
+	var closeButton = Titanium.UI.createButton({
+		zIndex:9,
+		width: 35,
+		height: 35 ,
+		top: 	5,
+		right: 	10,
+		title:'X'
+	});
+	closeButton.addEventListener('click',function(){
+		win.remove(floatingView);
+	});
+	floatingView.add(dsFileTable);
+	floatingView.add(closeButton);
+	win.add(floatingView);
 }
  
