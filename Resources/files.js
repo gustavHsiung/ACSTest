@@ -8,6 +8,9 @@ var Cloud = win.Cloud;
 var appkey = '';
 var OAuthSecret = '';
 var consumerKey = '';
+var fromGallery = 'gallery';
+var fromSD      = 'sd';
+
 
 if(Cloud.debug == true){
 	appkey = '4BwETUU5O8lUo0es7xlvYaKTJa6hmX4l';
@@ -345,11 +348,11 @@ function showFilesSourcesOption(){
 	}
 }
 
-function addNewFiles(event){
+function uploadFiles(file, fileName, tag){
 
  /* Create a progress bar */
        		 
-			var ind=Titanium.UI.createProgressBar({
+	var ind=Titanium.UI.createProgressBar({
 	  		  width:200,
 	  		  height:50,
 	  		  min:0,
@@ -415,8 +418,13 @@ function openSDFiles(){
 	var fileList = dir.getParent().getDirectoryListing();
 	Ti.API.info('external directoryListing = ' + dir.getParent().getDirectoryListing());
 	
+	win.add(floatingView);
 	
-	
+	floatingView.updateLayout({
+		top: 20,
+		width: screenWidth-40,
+		height: screenHeight - 100,
+   	});
 	var tableData =[];
 	for(var i=0; i<fileList.length; i++) {
    		var file = fileList[i];
@@ -450,26 +458,27 @@ function openSDFiles(){
     	}
   	}
   	dsFileTable.data= tableData;
-  	dsFileTable.addEventListener('click',showUploadView);
+  	dsFileTable.addEventListener('click',didSelectSDFile);
   		
-	
+	dsFileTable.show();
 	floatingView.add(dsFileTable);
 	floatingView.add(closeButton);
-	win.add(floatingView);
+	
 }
 function didSelectPhoto(event){
 	var selectedPhoto = event.media;
+	dsFileTable.hide();
 	win.add(floatingView);
-	showUploadView(selectedPhoto,'');       
+	showUploadFileView(selectedPhoto,'','gallery');       
 }
 function didSelectSDFile(event){
 	var selectedRow = event.rowData;
 	var file = selectedRow._file;
 	var fileName = file.toString();
-    dsFileTable.hide();
-	showUploadView(file,fileName);
+	dsFileTable.hide();
+	showUploadFileView(file,fileName,'sd');
 }
-function showUploadView(file, fileName){
+function showUploadFileView(file, fileName, source){
 	//get the selected row index
 		
     	floatingView.updateLayout({
@@ -488,7 +497,7 @@ function showUploadView(file, fileName){
 		});
 		var titleLable = Titanium.UI.createLabel({
 			text: 'File Name:',
-			font : {fontSize: 18, fontWeight : ' bold' },
+			font : {fontSize: 16, fontWeight : ' bold' },
 			height: 30,
 			width:  '30%',
 			top: 	10,
@@ -505,14 +514,63 @@ function showUploadView(file, fileName){
 			left: 	'30%'
 		});
 		uploadView.add(titleTextFiled);
+		
+		var tagLable = Titanium.UI.createLabel({
+			text: 'Tag:',
+			font : {fontSize: 16, fontWeight : ' bold' },
+			height: 30,
+			width:  '30%',
+			top: 	50,
+			left: 	'5%',
+			color:'#232'
+		});
+		uploadView.add(tagLable);
+		var tagTextFiled = Titanium.UI.createTextField({
+			value:	'',
+			height: 60,
+			width:  '50%',
+			top: 	60,
+			left: 	'30%'
+		});
+		if(source == fromGallery)
+		{
+			tagTextFiled.value = 'photo';
+		}
+		uploadView.add(tagTextFiled);
+		
+		
 		var confrimButton = Titanium.UI.createButton({
-			width: '80%',
+			width: '40%',
 			height: 44 ,
 			top: 	80,
 			left: 	'10%',
 			title:'Upload'
 		});
+		confrimButton.addEventListener('click',function(e){
+			uploadFiles(file, fileName, tagTextFiled.value );
+		});
 		uploadView.add(confrimButton);
+		
+		var cancelButton = Titanium.UI.createButton({
+			width: '40%',
+			height: 44 ,
+			top: 	80,
+			right: 	'10%',
+			title:'Cancel'
+		});
+		cancelButton.addEventListener('click',function(){
+			
+			floatingView.remove(uploadView);
+			win.remove(floatingView);
+			if(source == fromSD){
+				openSDFiles();
+			}else{
+				openPhotoGallery();
+			}
+			
+		});
+		uploadView.add(cancelButton);
+		
 		
 		floatingView.add(uploadView);
 		
