@@ -159,11 +159,16 @@ var floatingView = Ti.UI.createView({
 	width: screenWidth-40,
 	height: screenHeight - 100,
 	top: 20,
-	left:20,
-	backgroundColor: '#000',
-	opacity: 0.6
+	left:20
 });
-
+if(isAndroid){
+	floatingView.backgroundColor= '#000';
+	floatingView.opacity= 0.6;
+}else{
+	floatingView.updateLayout({
+		backgroundColor: 'rgba(0,0,0,0.5)'
+	});	
+}
 var closeButton = Titanium.UI.createButton({
 		zIndex:9,
 		width: 35,
