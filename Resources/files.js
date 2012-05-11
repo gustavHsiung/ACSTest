@@ -10,7 +10,7 @@ var OAuthSecret = '';
 var consumerKey = '';
 var fromGallery = 'gallery';
 var fromSD      = 'sd';
-
+var uoloading   = false;
 
 if(Cloud.debug == true){
 	appkey = '4BwETUU5O8lUo0es7xlvYaKTJa6hmX4l';
@@ -111,8 +111,7 @@ win.add(recipesTable);
 
 //table scrolling function
 recipesTable.addEventListener('scroll', function(e){
-	if(Ti.Platform.osname != 'iphone'){
-		Titanium.API.info("Ti.Platform.osname != 'iPhone':"+Ti.Platform.osname);
+	if(isAndroid){
 		return;
 	}
 	
@@ -192,7 +191,20 @@ var dsFileTable = Titanium.UI.createTableView({
 	top: 	10,
 	left: 	10,
 });
-	
+
+var ind=Titanium.UI.createProgressBar({
+	width:200,
+	height:50,
+	bottom:'30%',
+	min:0,
+	max:1,
+	value:0,
+	style:Titanium.UI.iPhone.ProgressBarStyle.PLAIN,
+	message:'Uploading...',
+	font:{fontSize:12, fontWeight:'bold'},
+	color:'#888'
+});
+			
 win.addEventListener('focus', loadFiles);
 
 
@@ -351,43 +363,35 @@ function showFilesSourcesOption(){
 function uploadFiles(file, fileName, tag){
 
  /* Create a progress bar */
+    uoloading = true;
        		 
-	var ind=Titanium.UI.createProgressBar({
-	  		  width:200,
-	  		  height:50,
-	  		  min:0,
-	  		  max:1,
-	  		  value:0,
-	  		  style:Titanium.UI.iPhone.ProgressBarStyle.PLAIN,
-	   		  top:10,
-	  		  message:'Uploading...',
-	 	      font:{fontSize:12, fontWeight:'bold'},
-	  	      color:'#888'
-			});
- 
-			floatingView.add(ind);
-			ind.show();
- 			
- 			var now = new Date();
-			var params = {
-				'name':now.toString() + '_img', 
-	            'file':selectedImage
-			};
+	floatingView.add(ind);
+	ind.show();
+ 		
+ 	var custom_fields={
+ 		"tag": tag
+	};
+	var params = {
+		'name':fileName, 
+	    'file':file,
+        'custom_fields':'{\"tag\":'+ '\"'+tag+'\"}'
+	};
 
-			var xhr = Titanium.Network.createHTTPClient();
- 
-	    	// onsendstream called repeatedly, use the progress property to
-       		// update the progress bar
-			xhr.onsendstream = function(e) {
-	    		ind.value = e.progress ;
-	    		Ti.API.info('ONSENDSTREAM - PROGRESS: ' + e.progress);
-			};
-	xhr.onload = function(e) {
+	var xhr = Titanium.Network.createHTTPClient();
+ 	 	
+ 	 	// onsendstream called repeatedly, use the progress property to
+       	// update the progress bar
+		xhr.onsendstream = function(e) {
+	   		ind.value = e.progress ;
+	   		Ti.API.info('ONSENDSTREAM - PROGRESS: ' + e.progress);
+		};
+	
+		xhr.onload = function(e) {
 	    Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> responseText:" +this.responseText);
 		ind.hide();
 	    Ti.UI.createAlertDialog({
-	                  title:'Success',
-	                  message:'status code ' + this.status
+	    	title:'Success',
+	        message:'status code ' + this.status
 		}).show();
             
 	};
@@ -399,9 +403,9 @@ function uploadFiles(file, fileName, tag){
 			
 	xhr.open('POST','https://api.cloud.appcelerator.com/v1/files/create.json?key='+appkey);
 	xhr.setRequestHeader("Cookie", "_session_id="+currentUser.session_id);
-	      		
+	     		
 	xhr.send(params);
-
+	
 }
 
 function updateFile (argument) {
@@ -500,7 +504,7 @@ function showUploadFileView(file, fileName, source){
 			font : {fontSize: 16, fontWeight : ' bold' },
 			height: 30,
 			width:  '30%',
-			top: 	10,
+			top: 	20,
 			left: 	'5%',
 			color:'#232'
 		});
@@ -508,7 +512,9 @@ function showUploadFileView(file, fileName, source){
 		
 		var titleTextFiled = Titanium.UI.createTextField({
 			value:	fileName,
-			height: 60,
+			font: {fontSize: 16},
+			borderStyle:2,
+			height: 45,
 			width:  '50%',
 			top: 	20,
 			left: 	'30%'
@@ -520,16 +526,18 @@ function showUploadFileView(file, fileName, source){
 			font : {fontSize: 16, fontWeight : ' bold' },
 			height: 30,
 			width:  '30%',
-			top: 	50,
+			top: 	80,
 			left: 	'5%',
 			color:'#232'
 		});
 		uploadView.add(tagLable);
 		var tagTextFiled = Titanium.UI.createTextField({
 			value:	'',
-			height: 60,
+			font: {fontSize: 16},
+			borderStyle:2,
+			height: 45,
 			width:  '50%',
-			top: 	60,
+			top: 	70,
 			left: 	'30%'
 		});
 		if(source == fromGallery)
@@ -539,27 +547,30 @@ function showUploadFileView(file, fileName, source){
 		uploadView.add(tagTextFiled);
 		
 		
-		var confrimButton = Titanium.UI.createButton({
+		var uploadButton = Titanium.UI.createButton({
 			width: '40%',
 			height: 44 ,
-			top: 	80,
+			top: 	120,
 			left: 	'10%',
 			title:'Upload'
 		});
-		confrimButton.addEventListener('click',function(e){
+		uploadButton.addEventListener('click',function(e){
+			uploadView.remove(uploadButton);
 			uploadFiles(file, fileName, tagTextFiled.value );
 		});
-		uploadView.add(confrimButton);
+		uploadView.add(uploadButton);
 		
 		var cancelButton = Titanium.UI.createButton({
 			width: '40%',
 			height: 44 ,
-			top: 	80,
+			top: 	120,
 			right: 	'10%',
 			title:'Cancel'
 		});
 		cancelButton.addEventListener('click',function(){
-			
+			if(uploading){
+				//show alert			
+			}
 			floatingView.remove(uploadView);
 			win.remove(floatingView);
 			if(source == fromSD){
