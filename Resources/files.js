@@ -368,13 +368,12 @@ function uploadFiles(file, fileName, tag){
 	floatingView.add(ind);
 	ind.show();
  		
- 	var custom_fields={
- 		"tag": tag
-	};
+ 	var custom_fields='{\"tag\": \"photo\"}';
+        
 	var params = {
 		'name':fileName, 
 	    'file':file,
-        'custom_fields':'{\"tag\":'+ '\"'+tag+'\"}'
+        'custom_fields':custom_fields
 	};
 
 	var xhr = Titanium.Network.createHTTPClient();
@@ -556,7 +555,7 @@ function showUploadFileView(file, fileName, source){
 		});
 		uploadButton.addEventListener('click',function(e){
 			uploadView.remove(uploadButton);
-			uploadFiles(file, fileName, tagTextFiled.value );
+			uploadFiles(file, titleTextFiled.value, tagTextFiled.value );
 		});
 		uploadView.add(uploadButton);
 		
@@ -569,7 +568,7 @@ function showUploadFileView(file, fileName, source){
 		});
 		cancelButton.addEventListener('click',function(){
 			if(uploading){
-				//show alert			
+			
 			}
 			floatingView.remove(uploadView);
 			win.remove(floatingView);
