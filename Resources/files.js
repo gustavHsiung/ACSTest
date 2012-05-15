@@ -306,15 +306,24 @@ function didLoadFiles(data) {
 			row.add(updateTimeLabel);
 			
 		
-			//according to the file type, add different icon to the left of the row 
-			/*var iconImage = Titanium.UI.createImageView({
-				image: 'img/eggpan.png',
+			//according to the file type, add different icon to the left of the row
+			var imageName = 'img/Default.png';
+			if(aFile.custom_fields){
+			if(aFile.custom_fields.tag == "photo")
+			{
+				imageName = 'img/Gallery.png';
+			}else if(aFile.custom_fields.tag == "text")
+			{
+				imageName = 'img/TEXT.png';
+			} }
+			var iconImage = Titanium.UI.createImageView({
+				image:imageName,
 				width: 50,
 				height: 50,
 				left: 10,
 				top: 10 
 			});
-			row.add(iconImage);*/
+			row.add(iconImage);
 			//add the row to data array
 			tableData.push(row);
 		}
