@@ -228,10 +228,10 @@ function loadFiles(pageNumber)
 	});
 
 	var data = {
-  		where: '{"name":"Appcelerator Cloud Services"}',
+  		where: '{"user_id":"'+currentUser.id+'"}',
   		page:pageNumber
 	};
-	xhr.open('GET','https://api.cloud.appcelerator.com/v1/files/query.json?key='+appkey,true,data);
+	xhr.open('GET','https://api.cloud.appcelerator.com/v1/files/query.json?key='+appkey+'&where={"user_id":"'+currentUser.id+'"}',true,data);
 		
 	xhr.onload = function(response) {
 			//the image upload method has finished 
