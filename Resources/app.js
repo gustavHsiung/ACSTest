@@ -4,13 +4,14 @@ Cloud.debug = true;  // optional; if you add this line, set it to false for prod
 Titanium.Facebook.appid = '203212366445168'; 
 Ti.Facebook.permissions = ['publish_stream','email']; // Permissions your app needs
 		
-var currentUser = {};
+var currentUser = { status:'unlogin'};
 
 // this sets the background color of the master UIView (when there are no windows/tab groups on it)
 Titanium.UI.setBackgroundColor('#000');
 
 // create tab group
 var tabGroup = Titanium.UI.createTabGroup();
+
 if (Ti.Platform.osname === "android") {
     // window focus events don't work on android so this workaround
     // catches the tabGroup focus event and fires the event on the
@@ -54,7 +55,6 @@ function updateLoginStatus(e) {
         var facebookEmail 	= e.data.email;
         
         label.text = 'Welcome '+facebookName+', now logging in to ACS as well, please wait...';
-        	
         loginACS();
     }
     else {
@@ -111,6 +111,8 @@ tabGroup.open();
  */
 function loginACS()
 {
+	currentUser.status = 'waiting';	
+        
 	Cloud.SocialIntegrations.externalAccountLogin({
             type: 'facebook',
             token: Ti.Facebook.accessToken
@@ -118,10 +120,13 @@ function loginACS()
             if (e.success) {
                 currentUser = e.users[0];
                 currentUser.session_id = e.meta.session_id;
+                currentUser.status = 'logined';
                 win2.currentUser = currentUser;
                 alert('Logged in! You are now logged in as ' + currentUser.first_name + currentUser.last_name);	
                	label.text = 'Hi!'+ currentUser.first_name +' '+ currentUser.last_name;
-			
+               	Ti.API.info(">>>>>>>>>>>>>>>>>>>>>>Titanium.App.fireEvent 'userHasLogin'");
+	
+				Titanium.App.fireEvent('userHasLogin', { user:currentUser});
             }
             else {
                 error(e);

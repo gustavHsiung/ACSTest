@@ -1,7 +1,7 @@
 
 var win = Titanium.UI.currentWindow;
 
-var currentUser = win.currentUser;
+var currentUser = {};
 
 var Cloud = win.Cloud;
 
@@ -10,6 +10,7 @@ var OAuthSecret = '';
 var consumerKey = '';
 var fromGallery = 'gallery';
 var fromSD      = 'sd';
+var fileloading = false
 var uoloading   = false;
 
 if(Cloud.debug == true){
@@ -33,19 +34,16 @@ win.backgroundColor = '#399';
 var addButton = Titanium.UI.createButton({
 	title:'Add'
 });
-
-addButton.addEventListener('click', showFilesSourcesOption);
 if(isAndroid){
 	addButton.top=10;
 	addButton.left=200;
 	addButton.width =100;
 	addButton.height = 44;
-	win.add(addButton);
-}else
-{
-	win.setRightNavButton(addButton);
 }
-var label = Titanium.UI.createLabel({
+		
+addButton.addEventListener('click', showFilesSourcesOption);
+
+var messagelabel = Titanium.UI.createLabel({
 	color:'#fff',
 	text:currentUser.last_name,
 	font:{fontSize:20,fontFamily:'Helvetica Neue'},
@@ -55,7 +53,7 @@ var label = Titanium.UI.createLabel({
 	left:20
 });
 
-win.add(label);
+win.add(messagelabel);
 
 //Table
 //create refresh view and relative variable
@@ -204,10 +202,56 @@ var ind=Titanium.UI.createProgressBar({
 	font:{fontSize:12, fontWeight:'bold'},
 	color:'#888'
 });
-			
+Ti.App.addEventListener('userHasLogin',userHasLogin);		
 win.addEventListener('focus', loadFiles);
 
+		
+init(win.currentUser);
 
+
+/*
+ * Initialiez Methods
+ * 
+ */
+
+function init(loginedUser)
+{
+	Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> loginedUser.status:" +loginedUser.status);
+	
+	if(loginedUser.status == 'logined')
+	{
+		currentUser = win.currentUser;
+		if(isAndroid){
+			addButton.top=10;
+			addButton.left=200;
+			addButton.width =100;
+			addButton.height = 44;
+			win.add(addButton);
+		}else
+		{
+			win.setRightNavButton(addButton);
+		}
+		
+		loadFiles(1);
+		
+	}else if(loginedUser.status == 'waiting')
+	{
+		messagelabel.text = 'Waiting...';
+	
+	}else if(loginedUser.status == 'unlogin')
+	{
+		messagelabel.text = 'Please go back to Account tab and login first!';
+	}
+
+}
+
+function userHasLogin(data)
+{
+	Ti.API.info(">>>>>>>>>>>>>>>>>>>>>>userHasLogin:"+data.user.status);
+	
+	var loaginedUser = data.user;
+	init(loaginedUser);
+}
 /*
  * File Methods
  * 
@@ -215,13 +259,13 @@ win.addEventListener('focus', loadFiles);
 
 function loadFiles(pageNumber)
 {
-	if(!currentUser)
+	if(fileloading ||currentUser.status != 'logined' )
 	{
-		label.text = 'Please go back to Account tab and login first!';
 		return;
 	}
 	
-	label.text = 'Loading files...';
+	fileloading = true; 		
+	messagelabel.text = 'Loading files...';
 	
 	var xhr = Titanium.Network.createHTTPClient({
  		enableKeepAlive:false
@@ -234,7 +278,8 @@ function loadFiles(pageNumber)
 	xhr.open('GET','https://api.cloud.appcelerator.com/v1/files/query.json?key='+appkey+'&where={"user_id":"'+currentUser.id+'"}',true,data);
 		
 	xhr.onload = function(response) {
-			//the image upload method has finished 
+		fileloading = false;
+		
 		if(this.responseText != '0')
 		{
 			Ti.API.info(">>>>>>>>>>>>>>>>>>>>>> responseText:" +this.responseText);
@@ -247,6 +292,7 @@ function loadFiles(pageNumber)
 	
 	xhr.onerror = function(e)
 	{
+		fileloading = false;
      	Ti.API.info(e);
 	};
 		
@@ -260,7 +306,7 @@ function didLoadFiles(data) {
 
       if(meta.status == 'ok' && meta.code == 200 && meta.method_name == 'queryFiles') {
         var files = data.response.files;
-        label.text = 'You have '+files.length +' files.';
+        messagelabel.text = 'You have '+files.length +' files.';
         var tableData = [];
         	//get through each item 
 		for(var i = 0; i < files.length; i++)
@@ -307,7 +353,7 @@ function didLoadFiles(data) {
 			
 		
 			//according to the file type, add different icon to the left of the row
-			var imageName = 'img/Default.png';
+			var imageName = 'img/Unknown.png';
 			if(aFile.custom_fields){
 			if(aFile.custom_fields.tag == "photo")
 			{
